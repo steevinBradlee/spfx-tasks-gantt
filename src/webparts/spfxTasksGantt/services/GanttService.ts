@@ -18,11 +18,10 @@ import { IUser } from '../models/IUser';
 const TASKS_SELECT_FIELDS = [
   'Id',
   'PercentComplete',
-  'AssignedTo/EMail',
-  'AssignedTo/FirstName',
-  'AssignedTo/LastName',
+  //'AssignedTo/EMail',
+  'AssignedTo/Name',
   'AssignedTo/Id',
-  'AssignedTo/UserName',
+  'AssignedTo/Title',
   'Checkmark',
   'Created',
   'Body',
@@ -35,12 +34,10 @@ const TASKS_SELECT_FIELDS = [
   'StartDate',
   'Title',
   'Status',
-  'Author/EMail',
-  'Author/FirstName',
-  'Author/LastName',
-  'Editor/EMail',
-  'Editor/FirstName',
-  'Editor/LastName'
+  'Author/Title',
+  'Author/Name',
+  'Editor/Title',
+  'Editor/Name',
 ];
 
 const STATUS_FIELD_PROPERTIES = [
@@ -128,11 +125,11 @@ export class GanttService {
           if (listItem.AssignedTo) {
             assignedTo = listItem.AssignedTo.map(assigned => {
               return <IUser>{
-                text: `${assigned.FirstName} ${assigned.LastName}`,
+                text: assigned.Title,
                 id: assigned.Id,
                 imageUrl: this._getUserImage(assigned.EMail),
                 email: assigned.EMail,
-                accountName: `i:0#.f|membership|${assigned.UserName}`
+                accountName: assigned.Name
               };
             });
           } 

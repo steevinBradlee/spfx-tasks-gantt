@@ -145,7 +145,7 @@ export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps
 
     let listsAreDifferent = false;
     for (const persona of list1) {
-      let personaPresentInOtherList = find(list2, p2 => (p2.id === persona.id || p2.email === persona.email));
+      let personaPresentInOtherList = find(list2, p2 => (p2.id === persona.id || p2.accountName === persona.accountName));
       if (!personaPresentInOtherList) {
         listsAreDifferent = true;
         break;

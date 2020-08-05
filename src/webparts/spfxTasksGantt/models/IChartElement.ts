@@ -9,4 +9,5 @@ export interface IChartElement {
   labelX: number;
   labelY: number;
   tooltip: string;
+  predecessors: number[];
 }

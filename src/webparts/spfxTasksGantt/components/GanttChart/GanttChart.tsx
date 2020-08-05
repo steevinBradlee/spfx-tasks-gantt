@@ -1,17 +1,23 @@
 import * as React from 'react';
 import { ITask } from '../../models/ITask';
+import { ILine } from '../../models/ILine';
 import * as d3 from 'd3';
 import { scaleLinear, scaleTime, select } from 'd3';
 import { IChartElement } from '../../models/IChartElement';
 import { ISvgProps } from '../../models/ISvgProps';
 import * as moment from 'moment';
+import { flatten } from '@microsoft/sp-lodash-subset';
 
 interface IGanttChartProps {
   tasks: ITask[];
   onTaskClick: (taskId: number) => void;
 }
 
-export class GanttChart extends React.Component<IGanttChartProps, any> {
+interface IGanttChartState {
+  tasks: ITask[];
+}
+
+export class GanttChart extends React.Component<IGanttChartProps, IGanttChartState> {
 
   private _svgRef: React.RefObject<SVGSVGElement> = React.createRef();
   private _elementHeight = 20;
@@ -24,23 +30,43 @@ export class GanttChart extends React.Component<IGanttChartProps, any> {
   }
 
   public componentDidMount() {
-    this._createGanttChart(this._elementHeight, 'date', false, {
-      width: this._svgWidth,
-      height: this._svgHeight,
-      fontSize: this._fontSize
-    });
-  }
-
-  public componentDidUpdate() {
-    this._createGanttChart(this._elementHeight, 'date', false, {
-      width: this._svgWidth,
-      height: this._svgHeight,
-      fontSize: this._fontSize
-    });
-  }
-
-  private _createGanttChart(elementHeight: number, sortMode: string, showRelations: false, svgOptions: any) {
     const { tasks } = this.props;
+    let sortedTasks = tasks.slice(0);
+    sortedTasks.sort((a, b) => {
+      return a.startDate.getTime() - b.startDate.getTime();
+    });
+    this.setState({
+      tasks: sortedTasks
+    }, () => {
+      this._createGanttChart(this._elementHeight, 'date', true, {
+        width: this._svgWidth,
+        height: this._svgHeight,
+        fontSize: this._fontSize
+      });
+    });
+  }
+
+  public componentDidUpdate(prevProps) {
+    const { tasks } = this.props;
+    let sortedTasks = tasks.slice(0);
+    if (JSON.stringify(sortedTasks) !== JSON.stringify(prevProps.tasks)) {
+      sortedTasks.sort((a, b) => {
+        return a.startDate.getTime() - b.startDate.getTime();
+      });
+      this.setState({
+        tasks: sortedTasks
+      }, () => {
+        this._createGanttChart(this._elementHeight, 'date', true, {
+          width: this._svgWidth,
+          height: this._svgHeight,
+          fontSize: this._fontSize
+        });
+      });
+    }
+  }
+
+  private _createGanttChart(elementHeight: number, sortMode: string, showRelations: boolean, svgOptions: any) {
+    const { tasks } = this.state;
     const margin = (svgOptions && svgOptions.margin) || {
       top: elementHeight * 2,
       left: elementHeight * 2
@@ -54,12 +80,12 @@ export class GanttChart extends React.Component<IGanttChartProps, any> {
   
     const fontSize = (svgOptions && svgOptions.fontSize) || 12;
 
-    let sortedTasks = tasks.slice(0);
+    /* let sortedTasks = tasks.slice(0);
     sortedTasks.sort((a, b) => {
       return a.startDate.getTime() - b.startDate.getTime();
-    });
+    }); */
 
-    const { minStart, maxEnd } = this._findDateBoundaries(sortedTasks);
+    const { minStart, maxEnd } = this._findDateBoundaries(tasks);
 
     minStart.subtract(2, 'days');
     maxEnd.add(2, 'days');
@@ -81,7 +107,8 @@ export class GanttChart extends React.Component<IGanttChartProps, any> {
   }
 
   private _createChartSvg(svgProps: ISvgProps) {
-    const { tasks, onTaskClick } = this.props;
+    const { onTaskClick } = this.props;
+    const { tasks } = this.state;
 
     const xScale = scaleTime()
       .domain([svgProps.minStartDate, svgProps.maxEndDate])
@@ -96,7 +123,19 @@ export class GanttChart extends React.Component<IGanttChartProps, any> {
     const g1 = select(this._svgRef.current).append('g').attr('transform', `translate(${svgProps.margin.left}, ${svgProps.margin.top})`);
 
     if (svgProps.showRelations) {
+      // create data describing connections' lines
+      const polylineData = this._createPolylineData(rectangleData, svgProps.elementHeight);
 
+      const linesContainer = g1.append('g').attr('transform', `translate(0,${svgProps.margin.top})`);
+
+      linesContainer
+        .selectAll('polyline')
+        .data(polylineData)
+        .enter()
+        .append('polyline')
+        .style('fill', 'none')
+        .style('stroke', d => d.color)
+        .attr('points', d => d.points);
     }
 
     const barsContainer = g1.append('g').attr('transform', `translate(0, ${svgProps.margin.top})`);
@@ -145,7 +184,6 @@ export class GanttChart extends React.Component<IGanttChartProps, any> {
       const height = elementHeight;
 
       const charWidth = (width / fontSize);
-      //const dependsOn = d.
       const tooltip = d.title;
 
       const singleCharWidth = fontSize * 0.5;
@@ -170,10 +208,55 @@ export class GanttChart extends React.Component<IGanttChartProps, any> {
         label: label,
         labelX: labelX,
         labelY: labelY,
-        tooltip: tooltip
+        tooltip: tooltip,
+        predecessors: d.predecessors
       };
     });
   }
+
+  private _createPolylineData(rectangleData: IChartElement[], elementHeight: number): ILine[] {
+    // prepare dependencies polyline data
+    const cachedData = this._createDataCacheById(rectangleData);
+  
+    // used to calculate offsets between elements later
+    const storedConnections = rectangleData.reduce((acc, e) => ({ ...acc, [e.id]: 0 }), {});
+  
+    // create data describing connections' lines
+    let lineDataNested =  rectangleData.map(d =>
+      d.predecessors
+        .map(parentId => cachedData[parentId] as IChartElement)
+        .map(parent => {
+          const color = '#' + (Math.max(0.1, Math.min(0.9, Math.random())) * 0xFFF << 0).toString(16);
+  
+          // increase the amount rows occupied by both parent and current element (d)
+          storedConnections[parent.id]++;
+          storedConnections[d.id]++;
+  
+          const deltaParentConnections = storedConnections[parent.id] * (elementHeight / 4);
+          const deltaChildConnections = storedConnections[d.id] * (elementHeight / 4);
+  
+          const points = [
+            d.x, (d.y + (elementHeight / 2)),
+            d.x - deltaChildConnections, (d.y + (elementHeight / 2)),
+            d.x - deltaChildConnections, (d.y - (elementHeight * 0.25)),
+            parent.xEnd + deltaParentConnections, (d.y - (elementHeight * 0.25)),
+            parent.xEnd + deltaParentConnections, (parent.y + (elementHeight / 2)),
+            parent.xEnd, (parent.y + (elementHeight / 2))
+          ];
+  
+          let line: ILine = {
+            points: points.join(','),
+            color
+          }
+
+          return line;
+        })
+    );
+
+    const lineData = flatten(lineDataNested);
+    return lineData;
+  };
+
 
   private _findDateBoundaries(data: ITask[]): { minStart: moment.Moment, maxEnd: moment.Moment } {
     let minStartDate, maxEndDate;
@@ -191,6 +274,11 @@ export class GanttChart extends React.Component<IGanttChartProps, any> {
       minStart: minStartDate,
       maxEnd: maxEndDate
     };
+  }
+
+  private _createDataCacheById(data: IChartElement[]) {
+    // Return array of chart elements in the form, [id: chartElement, ...]
+    return data.reduce((cache, elt) => ({ ...cache, [elt.id]: elt }), {});
   }
 
   public render() {
