@@ -1,0 +1,33 @@
+.editableLabel {
+  margin: 12px 0px;
+
+  .viewLabel {
+    display: block;
+  
+    label {
+      padding-top: 5px;
+      padding-bottom: 5px;
+      display: block;
+    }
+  
+    .value {
+      font-size: 14px;
+      font-weight: 400;
+      padding-right: 14px;
+      padding-left: 14px;
+      padding-top: 2px;
+      padding-bottom: 2px;
+      height: 30px;
+      background: #faf9f8;
+      display: flex;
+      align-items: center;
+
+      &:hover {
+        border-width: 2px;
+        border-style: solid;
+        border-color: #edebe9;
+        padding: 0px 12px;
+      }
+    }
+  }
+}

@@ -1,0 +1,3 @@
+const TASKS_LIST_TEMPLATE_ID = 171;
+
+export { TASKS_LIST_TEMPLATE_ID };

@@ -1,0 +1,26 @@
+@import '~office-ui-fabric-react/dist/sass/References.scss';
+
+.modalContainer {
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: stretch;
+}
+
+.container {
+  padding: 5px 0px;
+  width: 450px;
+  
+  .header {
+    padding: 0px 20px;
+    border-bottom: solid thin lightgray;
+  }
+
+  .body {
+    padding: 0px 20px;
+  }
+
+  .footer {
+    padding: 0px 20px;
+    padding-bottom: 40px;
+  }
+}
