@@ -2,7 +2,7 @@
 
 ## Summary
 
-Short summary on functionality and used technologies.
+SharePoint Framework (SPFx) Gantt Chart web part project for a SharePoint Tasks list
 
 [picture of the solution in action, if possible]
 
