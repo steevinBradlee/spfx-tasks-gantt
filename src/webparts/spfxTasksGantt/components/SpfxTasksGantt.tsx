@@ -11,6 +11,7 @@ import { IDropdownOption, IPersonaProps } from 'office-ui-fabric-react';
 import { equalDatesNoTime } from '../funcs';
 import { GanttChart } from './GanttChart/GanttChart';
 import { IUser } from '../models/IUser';
+import { IPredecessor } from '../models/IPredecessor';
 
 
 interface ISpfxTasksGanttState {
@@ -19,6 +20,8 @@ interface ISpfxTasksGanttState {
   selectedTaskId: ITask['id'];
   updatedSelectedTaskProperties: Object;
   statusOptions: IDropdownOption[];
+  priorityOptions: IDropdownOption[];
+  predecessorOptions: IDropdownOption[];
 }
 
 export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps, ISpfxTasksGanttState> {
@@ -33,7 +36,9 @@ export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps
       isOpen: false,
       selectedTaskId: null,
       updatedSelectedTaskProperties: {},
-      statusOptions: null
+      statusOptions: null,
+      priorityOptions: null,
+      predecessorOptions: null
     };
   }
 
@@ -43,9 +48,13 @@ export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps
     this._ganttService = GanttService.getInstance();
     let tasks = await this._ganttService.getTasks(tasksListSiteUrl, tasksListTitle);
     let statusOptions = await this._ganttService.getStatusDropdownOptions(tasksListSiteUrl, tasksListTitle);
+    let priorityOptions = await this._ganttService.getPriorityDropdownOptions(tasksListSiteUrl, tasksListTitle);
+    let predecessorOptions: IDropdownOption[] = tasks.map(task => ({ text: task.title, key: `${task.id}` }));
     this.setState({
       tasks: tasks,
-      statusOptions: statusOptions
+      statusOptions: statusOptions,
+      priorityOptions: priorityOptions,
+      predecessorOptions: predecessorOptions
     });
   }
 
@@ -138,11 +147,36 @@ export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps
     });
   }
 
+  public onTaskPredecessorsPropertyChange = async (taskId: number, predecessorIds: IPredecessor[]) => {
+    const { tasksListSiteUrl, tasksListTitle } = this.props;
+    let tasks = this.state.tasks.slice(0);
+    let updatedTaskIndex = findIndex(tasks, (task) => {
+      return task.id === taskId;
+    });
+
+    // If value hasn't changed, don't do anything
+    let oldPredecessorsValue = tasks[updatedTaskIndex]['predecessors'];
+    if (!this.differentPredecessorLists(oldPredecessorsValue, predecessorIds)) {
+      return;
+    }
+
+    let predecessorFieldName = `predecessorsId`;
+    let predecessorFieldValue = {
+      results: predecessorIds.map(pre => pre.id)
+    };
+
+    await this._ganttService.updateTask(tasksListSiteUrl, tasksListTitle, taskId, predecessorFieldName, predecessorFieldValue);
+
+    tasks[updatedTaskIndex] = { ...tasks[updatedTaskIndex], ...{['predecessors'] : predecessorIds}};
+    this.setState({
+      tasks: tasks
+    });
+  }
+
   public differentPersonaLists(list1: IUser[], list2: IUser[]): boolean {
     if (list1.length !== list2.length) {
       return true;
     }
-
     let listsAreDifferent = false;
     for (const persona of list1) {
       let personaPresentInOtherList = find(list2, p2 => (p2.id === persona.id || p2.accountName === persona.accountName));
@@ -151,12 +185,19 @@ export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps
         break;
       }
     }
+    return listsAreDifferent;
+  }
 
+  public differentPredecessorLists(list1: IPredecessor[], list2: IPredecessor[]): boolean {
+    if (list1.length !== list2.length) {
+      return true;
+    }
+    const listsAreDifferent = list1.every(pre => (list2.filter(pre2 => pre2.id === pre.id)).length > 0);
     return listsAreDifferent;
   }
 
   public render(): React.ReactElement<ISpfxTasksGanttProps> {
-    const { tasks, isOpen, selectedTaskId, statusOptions } = this.state;
+    const { tasks, isOpen, selectedTaskId, statusOptions, predecessorOptions, priorityOptions } = this.state;
 
     let selectedTask = this.state.tasks && this.state.tasks.filter(task => task.id === selectedTaskId)[0];
 
@@ -181,7 +222,10 @@ export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps
                 setIsModalOpen={this.setIsOpen}
                 onPropertyChange={this.onTaskPropertyChange}
                 onPersonPropertyChange={this.onTaskPersonPropertyChange}
+                onPredecessorsPropertyChange={this.onTaskPredecessorsPropertyChange}
                 statusOptions={statusOptions}
+                priorityOptions={priorityOptions}
+                predecessorOptions={predecessorOptions}
               />
             }
           </div>

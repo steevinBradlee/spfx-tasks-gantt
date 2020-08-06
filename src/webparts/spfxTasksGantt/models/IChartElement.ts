@@ -1,3 +1,5 @@
+import { IPredecessor } from './IPredecessor';
+
 export interface IChartElement {
   x: number;
   y: number;
@@ -9,5 +11,5 @@ export interface IChartElement {
   labelX: number;
   labelY: number;
   tooltip: string;
-  predecessors: number[];
+  predecessors: IPredecessor[];
 }

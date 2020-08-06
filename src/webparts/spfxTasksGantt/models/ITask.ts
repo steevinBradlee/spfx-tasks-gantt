@@ -1,5 +1,6 @@
 import { IUser } from "./IUser";
 import { IPersonaProps } from "office-ui-fabric-react";
+import { IPredecessor } from './IPredecessor';
 
 export interface ITask {
   id: number;
@@ -11,7 +12,8 @@ export interface ITask {
   startDate: Date;
   dueDate: Date;
   status: string;
-  predecessors: ITask['id'][];
+  predecessors: IPredecessor[];
   assignedTo?: IUser[];
   createdBy: IUser;
+  priority: string;
 }

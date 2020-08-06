@@ -10,6 +10,6 @@
 import { IPersonaProps } from 'office-ui-fabric-react';
 
 export interface IUser extends IPersonaProps {
-  email: string;
+  //email: string;
   accountName: string;
 }

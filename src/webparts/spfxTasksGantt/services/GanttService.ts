@@ -18,7 +18,6 @@ import { IUser } from '../models/IUser';
 const TASKS_SELECT_FIELDS = [
   'Id',
   'PercentComplete',
-  //'AssignedTo/EMail',
   'AssignedTo/Name',
   'AssignedTo/Id',
   'AssignedTo/Title',
@@ -28,6 +27,7 @@ const TASKS_SELECT_FIELDS = [
   'DueDate',
   'Modified',
   'Predecessors/Id',
+  'Predecessors/Title',
   'RelatedItems',
   'Priority',
   'RelatedItems',
@@ -40,7 +40,7 @@ const TASKS_SELECT_FIELDS = [
   'Editor/Name',
 ];
 
-const STATUS_FIELD_PROPERTIES = [
+const CHOICE_FIELD_PROPERTIES = [
   'ID', 
   'Choices', 
   'FillInChoice', 
@@ -58,7 +58,9 @@ const SP_PROPERTY_MAPPINGS = {
   startDate: 'StartDate',
   dueDate: 'DueDate',
   status: 'Status',
-  assignedToId: 'AssignedToId'
+  assignedToId: 'AssignedToId',
+  predecessorsId: 'PredecessorsId',
+  priority: 'Priority'
 };
 
 const TASKS_EXPAND_FIELDS = [
@@ -66,6 +68,7 @@ const TASKS_EXPAND_FIELDS = [
 ];
 
 const TASK_STATUS_COLUMN_NAME = 'Task Status';
+const TASK_PRIORITY_COLUMN_NAME = 'Priority';
 
 const PEOPLE_SEARCH_SELECT_PROPERTIES = [
   'PreferredName',
@@ -111,7 +114,6 @@ export class GanttService {
   }
 
   public async getTasks(siteUrl: string, listTitle: string): Promise<ITask[]> {
-    let tasks = [];
     if (!isEmpty(siteUrl)) {
       try {
         const site = Site(siteUrl);
@@ -120,38 +122,36 @@ export class GanttService {
           .select(...TASKS_SELECT_FIELDS)
           .expand(...TASKS_EXPAND_FIELDS)
           .get();
-        tasks = listItems.map(listItem => {
+        let tasks: ITask[] = listItems.map(listItem => {
           let assignedTo: IUser[] = [];
           if (listItem.AssignedTo) {
             assignedTo = listItem.AssignedTo.map(assigned => {
               return <IUser>{
                 text: assigned.Title,
-                id: assigned.Id,
-                imageUrl: this._getUserImage(assigned.EMail),
-                email: assigned.EMail,
+                imageUrl: this._getUserImage(assigned.Name),
                 accountName: assigned.Name
               };
             });
           } 
-          return {
+          return <ITask>{
             id: listItem.Id,
             title: listItem.Title,
             description: listItem.Body,
-            percentComplete: listItem.PercentComplete,
-            completed: listItem.Checkmark,
+            percentComplete: listItem.PercentComplete ? parseFloat(listItem.PercentComplete) : 0,
+            completed: listItem.Checkmark === '0' ? false : true,
             createdDate: new Date(listItem.Created),
             startDate: new Date(listItem.StartDate),
             dueDate: new Date(listItem.DueDate),
             status: listItem.Status,
             predecessors: listItem.Predecessors ? 
-              listItem.Predecessors.map(pre => pre.Id) : [],
+              listItem.Predecessors.map(pre => ({ id: pre.Id, title: pre.Title })) : [],
             assignedTo: assignedTo,
             createdBy: {
-              firstName: listItem.Author.FirstName,
-              lastName: listItem.Author.LastName,
-              email: listItem.Author.EMail,
-              imageUrl: this._getUserImage(listItem.Author.EMail)
-            }
+              text: listItem.Author.Title,
+              accountName: listItem.Author.Name,
+              imageUrl: this._getUserImage(listItem.Author.Name)
+            },
+            priority: listItem.Priority
           };
         });
 
@@ -163,13 +163,14 @@ export class GanttService {
     }
   }
 
-  private _getUserImage(userEmail: string): string {
-    return `/_layouts/15/userphoto.aspx?${userEmail}&Size=L`;
+  private _getUserImage(accountName: string): string {
+    return `/_layouts/15/userphoto.aspx?Size=L&accountname=${accountName}`;
   }
 
   public async updateTask(siteUrl: string, listName: string, taskId: number, propertyName: string, propertyValue: any) {
     try {
       const sharePointPropertyName = SP_PROPERTY_MAPPINGS[propertyName];
+      
       let updateProperties = {
         [sharePointPropertyName]: propertyValue
       };
@@ -179,6 +180,8 @@ export class GanttService {
         .getByTitle(listName).items
         .getById(taskId)
         .update(updateProperties);
+
+      return updatedTaskResult;
     }
     catch (error) {
       console.error(error);
@@ -189,9 +192,29 @@ export class GanttService {
     try {
       const site = Site(siteUrl);
       let options: IDropdownOption[] = [];
-      const statusField = await site.rootWeb.lists.getByTitle(listName).fields.getByTitle(TASK_STATUS_COLUMN_NAME).select(...STATUS_FIELD_PROPERTIES).get();
+      const statusField = await site.rootWeb.lists.getByTitle(listName).fields.getByTitle(TASK_STATUS_COLUMN_NAME).select(...CHOICE_FIELD_PROPERTIES).get();
       if (statusField) {
         options = statusField['Choices'].map((choice: string) => {
+          return {
+            key: choice,
+            text: choice
+          };
+        });
+      }
+      return options;
+    }
+    catch (error) {
+      console.warn(error);
+    }
+  }
+
+  public async getPriorityDropdownOptions(siteUrl: string, listName: string): Promise<IDropdownOption[]> {
+    try {
+      const site = Site(siteUrl);
+      let options: IDropdownOption[] = [];
+      const priorityField = await site.rootWeb.lists.getByTitle(listName).fields.getByTitle(TASK_PRIORITY_COLUMN_NAME).select(...CHOICE_FIELD_PROPERTIES).get();
+      if (priorityField) {
+        options = priorityField['Choices'].map((choice: string) => {
           return {
             key: choice,
             text: choice

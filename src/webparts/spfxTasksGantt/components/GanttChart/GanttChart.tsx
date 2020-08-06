@@ -80,11 +80,6 @@ export class GanttChart extends React.Component<IGanttChartProps, IGanttChartSta
   
     const fontSize = (svgOptions && svgOptions.fontSize) || 12;
 
-    /* let sortedTasks = tasks.slice(0);
-    sortedTasks.sort((a, b) => {
-      return a.startDate.getTime() - b.startDate.getTime();
-    }); */
-
     const { minStart, maxEnd } = this._findDateBoundaries(tasks);
 
     minStart.subtract(2, 'days');
@@ -224,7 +219,7 @@ export class GanttChart extends React.Component<IGanttChartProps, IGanttChartSta
     // create data describing connections' lines
     let lineDataNested =  rectangleData.map(d =>
       d.predecessors
-        .map(parentId => cachedData[parentId] as IChartElement)
+        .map(pre => cachedData[pre.id] as IChartElement)
         .map(parent => {
           const color = '#' + (Math.max(0.1, Math.min(0.9, Math.random())) * 0xFFF << 0).toString(16);
   
@@ -247,7 +242,7 @@ export class GanttChart extends React.Component<IGanttChartProps, IGanttChartSta
           let line: ILine = {
             points: points.join(','),
             color
-          }
+          };
 
           return line;
         })
@@ -255,8 +250,7 @@ export class GanttChart extends React.Component<IGanttChartProps, IGanttChartSta
 
     const lineData = flatten(lineDataNested);
     return lineData;
-  };
-
+  }
 
   private _findDateBoundaries(data: ITask[]): { minStart: moment.Moment, maxEnd: moment.Moment } {
     let minStartDate, maxEndDate;

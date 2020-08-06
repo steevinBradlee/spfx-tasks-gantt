@@ -2,7 +2,7 @@ import * as React from 'react';
 import { ITask } from '../../models/ITask';
 import { IconButton, getTheme, Modal, IIconProps, IDropdownOption, Dropdown, IPersonaProps } from 'office-ui-fabric-react';
 import styles from './TaskModal.module.scss';
-import { TextField } from 'office-ui-fabric-react/lib/TextField';
+import { TextField, MaskedTextField } from 'office-ui-fabric-react/lib/TextField';
 import { Stack, IStackProps, IStackStyles } from 'office-ui-fabric-react/lib/Stack';
 import EditableLabel from '../EditableLabel/EditableLabel';
 import CalendarInput from '../CalendarInput/CalendarInput';
@@ -11,6 +11,8 @@ import { find } from '@microsoft/sp-lodash-subset';
 import GanttPeoplePicker from '../GanttPeoplePicker/GanttPeoplePicker';
 import peoplePickerStyles from '../GanttPeoplePicker/GanttPeoplePicker.module.scss';
 import { IUser } from '../../models/IUser';
+import NumberInput from '../NumberInput/NumberInput';
+import { IPredecessor } from '../../models/IPredecessor';
 
 const cancelIcon: IIconProps = { iconName: 'Cancel' };
 
@@ -43,11 +45,14 @@ interface ITaskModalProps {
   setIsModalOpen: (isOpen: boolean) => any;
   onPropertyChange: (taskId: number, propertyName: string, propertyValue: any) => any;
   onPersonPropertyChange: (taskId: number, propertyName: string, propertyValue: any) => any;
+  onPredecessorsPropertyChange: (taskId: number, predecessors: IPredecessor[]) => any;
   statusOptions: IDropdownOption[];
+  priorityOptions: IDropdownOption[];
+  predecessorOptions: IDropdownOption[];
 }
 
 const TaskModal: React.FunctionComponent<ITaskModalProps> = (props: ITaskModalProps) => {
-  const { isModalOpen, setIsModalOpen, task, onPropertyChange, onPersonPropertyChange, statusOptions } = props;
+  const { isModalOpen, setIsModalOpen, task, predecessorOptions, onPropertyChange, onPersonPropertyChange, onPredecessorsPropertyChange, statusOptions, priorityOptions } = props;
 
   const [taskId, setTaskId] = React.useState(task.id);
 
@@ -66,11 +71,18 @@ const TaskModal: React.FunctionComponent<ITaskModalProps> = (props: ITaskModalPr
   const [description, setDescription] = React.useState(task.description);
   const descriptionRef = React.useRef();
 
-  const [percentComplete, setPercentComplete] = React.useState(task.percentComplete);
+  const [percentComplete, setPercentComplete] = React.useState(`${task.percentComplete * 100}`);
   const percentCompleteRef = React.useRef();
 
   const [status, setStatus] = React.useState(find(statusOptions, option => option.key === task.status));
   const statusRef = React.useRef();
+
+  const [priority, setPriority] = React.useState(find(priorityOptions, option => option.key === task.priority));
+  const priorityRef = React.useRef();
+
+  let selectedPredecessorOptions: IDropdownOption[] = predecessorOptions.filter(preOpt => find(task.predecessors, pre => String(pre.id) === preOpt.key));
+  const [predecessors, setPredecessors] = React.useState(selectedPredecessorOptions);
+  const predecessorsRef = React.useRef();
 
   React.useEffect(() => {
     if (task.id !== taskId) {
@@ -79,8 +91,10 @@ const TaskModal: React.FunctionComponent<ITaskModalProps> = (props: ITaskModalPr
       setDescription(task.description);
       setStartDate(task.startDate);
       setDueDate(task.dueDate);
-      setPercentComplete(task.percentComplete);
+      setPercentComplete(`${task.percentComplete * 100}`);
       setStatus(find(statusOptions, option => option.key === task.status));
+      let selectedPredecessorOptions: IDropdownOption[] = predecessorOptions.filter(preOpt => find(task.predecessors, pre => String(pre.id) === preOpt.key));
+      setPredecessors(selectedPredecessorOptions);
     }
   }, [task]);
 
@@ -197,7 +211,7 @@ const TaskModal: React.FunctionComponent<ITaskModalProps> = (props: ITaskModalPr
                     label='Description' 
                     value={description} 
                     onChange={(event, newValue) => {
-                      setTitle(newValue);
+                      setDescription(newValue);
                     }} 
                     componentRef={descriptionRef}
                   />
@@ -209,22 +223,26 @@ const TaskModal: React.FunctionComponent<ITaskModalProps> = (props: ITaskModalPr
                   value={`${percentComplete}`}
                   type={'text'}
                   childRef={percentCompleteRef}
-                  onClickOutside={(newPercentComplete) => onPropertyChange(task.id, 'percentComplete', newPercentComplete)}
+                  onClickOutside={(newPercentComplete) => {
+                    let newPercent = parseFloat(newPercentComplete) / 100;
+                    onPropertyChange(task.id, 'percentComplete', newPercent);
+                  }}
                 >
-                  <TextField 
-                    label='% Complete' 
-                    value={`${percentComplete}`} 
-                    onChange={(event, newValue) => {
-                      setPercentComplete(parseInt(newValue));
-                    }} 
-                    componentRef={percentCompleteRef}
+                  <NumberInput
+                    label={'% Complete'}
+                    value={parseFloat(percentComplete)}
+                    ref={percentCompleteRef}
+                    onChange={(event) => {
+                      setPercentComplete(event.currentTarget.value);
+                    }}
                   />
                 </EditableLabel>
               </div>
               <div>
                 <EditableLabel
                   label={'Status'}
-                  value={`${status.text}`}
+                  value={status}
+                  displayValue={`${status.text}`}
                   type={'text'}
                   childRef={statusRef}
                   onClickOutside={(newStatus) => onPropertyChange(task.id, 'status', newStatus.key)}
@@ -242,6 +260,57 @@ const TaskModal: React.FunctionComponent<ITaskModalProps> = (props: ITaskModalPr
                   />
                 </EditableLabel>
               </div>
+              <div>
+                <EditableLabel
+                  label={'Priority'}
+                  value={priority}
+                  displayValue={`${priority.text}`}
+                  type={'text'}
+                  childRef={priorityRef}
+                  onClickOutside={(newPriority) => onPropertyChange(task.id, 'priority', newPriority.key)}
+                  relatedFocusTarget={DROPDOWN_CONTAINER_CLASSNAME}
+                >
+                  <Dropdown
+                    placeholder='Select an option'
+                    selectedKey={priority.key}
+                    label='Priority'
+                    options={priorityOptions}
+                    onChange={(event, option) => {
+                      setPriority(option);
+                    }}
+                    className={DROPDOWN_CONTAINER_CLASSNAME}
+                  />
+                </EditableLabel>
+              </div>
+              <div>
+                <EditableLabel
+                  label={'Predecessors'}
+                  value={predecessors}
+                  displayValue={predecessorsString(predecessors)}
+                  type={'text'}
+                  childRef={predecessorsRef}
+                  onClickOutside={(newPredecessors) => onPredecessorsPropertyChange(task.id, newPredecessors.map(pre => ({id: pre.key, title: pre.text})))}
+                  relatedFocusTarget={DROPDOWN_CONTAINER_CLASSNAME}
+                >
+                  <Dropdown
+                    placeholder='Select task predecessors'
+                    multiSelect
+                    selectedKeys={predecessors.map(pre => `${pre.key}`)}
+                    label='Predecessors'
+                    options={predecessorOptions}
+                    onChange={(event, option) => {
+                      if (option) {
+                        setPredecessors(
+                          option.selected ? 
+                            [...predecessors, option] : 
+                            predecessors.filter(pre => pre.key !== option.key) 
+                        );
+                      }
+                    }}
+                    className={DROPDOWN_CONTAINER_CLASSNAME}
+                  />
+                </EditableLabel>
+              </div>
             </Stack>
           </div>
           <div className={styles.footer}>
@@ -251,5 +320,11 @@ const TaskModal: React.FunctionComponent<ITaskModalProps> = (props: ITaskModalPr
     </div>
   );
 };
+
+function predecessorsString(predecessors: IDropdownOption[]) {
+  return predecessors.reduce((accumulator, currentValue, index) => {
+    return accumulator + `${currentValue.text}${index < predecessors.length - 1 ? ', ' : ''}`;
+  }, '');
+}
 
 export default TaskModal;
