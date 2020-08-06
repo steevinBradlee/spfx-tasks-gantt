@@ -2,6 +2,8 @@
 
 ## Summary
 
+**IN DEVELOPMENT**
+
 SharePoint Framework (SPFx) Gantt Chart web part project for a SharePoint Tasks list
 
 [picture of the solution in action, if possible]
