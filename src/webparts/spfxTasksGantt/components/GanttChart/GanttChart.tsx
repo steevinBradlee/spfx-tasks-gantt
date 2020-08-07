@@ -7,6 +7,7 @@ import { IChartElement } from '../../models/IChartElement';
 import { ISvgProps } from '../../models/ISvgProps';
 import * as moment from 'moment';
 import { flatten } from '@microsoft/sp-lodash-subset';
+import styles from './GanttChart.module.scss';
 
 interface IGanttChartProps {
   tasks: ITask[];
@@ -277,8 +278,10 @@ export class GanttChart extends React.Component<IGanttChartProps, IGanttChartSta
 
   public render() {
     return (
-      <svg ref={this._svgRef} width={this._svgWidth} height={this._svgHeight} >
-      </svg>
+      <div className={styles.ganttChart}>
+        <svg ref={this._svgRef} width={this._svgWidth} height={this._svgHeight} >
+        </svg>
+      </div>
     );
   }
 }

@@ -154,7 +154,10 @@ export class GanttService {
             priority: listItem.Priority
           };
         });
-
+        
+        tasks.sort((a, b) => {
+          return a.startDate.getTime() - b.startDate.getTime();
+        })
         return tasks;
       }
       catch (error) {

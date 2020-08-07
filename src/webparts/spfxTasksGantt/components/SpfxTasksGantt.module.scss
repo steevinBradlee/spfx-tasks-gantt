@@ -2,11 +2,37 @@
 
 .spfxTasksGantt {
   .container {
-    max-width: 700px;
-    margin: 0px auto;
     box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 25px 50px 0 rgba(0, 0, 0, 0.1);
   }
 
+  .header {
+    @include ms-Grid-row;
+    border-bottom: 1px solid;
+    border-color: #edebe9;
+    margin: 0px;
+
+    > div {
+      @include ms-Grid-col;
+      @include ms-sm12;
+      padding: 15px 15px;
+    }
+  }
+
+  .body {
+    @include ms-Grid-row;
+
+    .leftCol {
+      @include ms-Grid-col;
+      @include ms-sm3;
+    }
+
+    .rightCol {
+      @include ms-Grid-col;
+      @include ms-sm9;
+      border-left: solid 2px gray;
+    }
+  }
+  
   .row {
     @include ms-Grid-row;
     @include ms-fontColor-white;

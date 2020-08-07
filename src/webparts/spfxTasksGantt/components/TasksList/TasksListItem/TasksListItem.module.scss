@@ -1,0 +1,14 @@
+.tasksListItem {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px 18px;
+
+  i {
+    margin-right: 12px;
+  }
+
+  &.completed {
+    opacity: 0.6;
+  }
+}

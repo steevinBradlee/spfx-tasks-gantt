@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ITask } from '../../models/ITask';
-import { IconButton, getTheme, Modal, IIconProps, IDropdownOption, Dropdown, IPersonaProps } from 'office-ui-fabric-react';
-import styles from './TaskModal.module.scss';
+import { IconButton, getTheme, Modal, IIconProps, IDropdownOption, Dropdown, IPersonaProps, PanelType, Panel } from 'office-ui-fabric-react';
+import styles from './TaskViewEditPanel.module.scss';
 import { TextField, MaskedTextField } from 'office-ui-fabric-react/lib/TextField';
 import { Stack, IStackProps, IStackStyles } from 'office-ui-fabric-react/lib/Stack';
 import EditableLabel from '../EditableLabel/EditableLabel';
@@ -39,10 +39,10 @@ const columnProps: Partial<IStackProps> = {
 
 const DROPDOWN_CONTAINER_CLASSNAME = '.ms-Callout.ms-Dropdown-callout';
 
-interface ITaskModalProps {
+interface ITaskViewEditPanelProps {
   task: ITask;
-  isModalOpen: boolean;
-  setIsModalOpen: (isOpen: boolean) => any;
+  isPanelOpen: boolean;
+  setIsPanelOpen: (isOpen: boolean) => any;
   onPropertyChange: (taskId: number, propertyName: string, propertyValue: any) => any;
   onPersonPropertyChange: (taskId: number, propertyName: string, propertyValue: any) => any;
   onPredecessorsPropertyChange: (taskId: number, predecessors: IPredecessor[]) => any;
@@ -51,8 +51,8 @@ interface ITaskModalProps {
   predecessorOptions: IDropdownOption[];
 }
 
-const TaskModal: React.FunctionComponent<ITaskModalProps> = (props: ITaskModalProps) => {
-  const { isModalOpen, setIsModalOpen, task, predecessorOptions, onPropertyChange, onPersonPropertyChange, onPredecessorsPropertyChange, statusOptions, priorityOptions } = props;
+const TaskViewEditPanel: React.FunctionComponent<ITaskViewEditPanelProps> = (props: ITaskViewEditPanelProps) => {
+  const { isPanelOpen, setIsPanelOpen, task, predecessorOptions, onPropertyChange, onPersonPropertyChange, onPredecessorsPropertyChange, statusOptions, priorityOptions } = props;
 
   const [taskId, setTaskId] = React.useState(task.id);
 
@@ -100,30 +100,14 @@ const TaskModal: React.FunctionComponent<ITaskModalProps> = (props: ITaskModalPr
 
   return (
     <div>
-      <Modal
-        isOpen={isModalOpen}
-        onDismiss={() => setIsModalOpen(false)}
-        isBlocking={false}
-        containerClassName={styles.modalContainer}
-        styles={{
-          main: {
-            maxWidth: '768px'
-          }
-        }}
+      <Panel
+        isOpen={isPanelOpen}
+        type={PanelType.medium}
+        closeButtonAriaLabel='Close'
+        headerText='Edit Task'
+        onDismiss={() => setIsPanelOpen(false)}
       >
         <div className={styles.container}>
-          <div className={styles.header}>
-            <Stack tokens={stackTokens}>
-              <Stack.Item align='end'>
-                <IconButton
-                  styles={iconButtonStyles}
-                  iconProps={cancelIcon}
-                  ariaLabel='Close task modal'
-                  onClick={() => setIsModalOpen(false)}
-                />
-              </Stack.Item>
-            </Stack>
-          </div>
           <div className={styles.body}>
             <Stack>
               <div>
@@ -312,11 +296,9 @@ const TaskModal: React.FunctionComponent<ITaskModalProps> = (props: ITaskModalPr
                 </EditableLabel>
               </div>
             </Stack>
-          </div>
-          <div className={styles.footer}>
-          </div>          
+          </div>      
         </div>
-      </Modal>
+      </Panel>
     </div>
   );
 };
@@ -327,4 +309,4 @@ function predecessorsString(predecessors: IDropdownOption[]) {
   }, '');
 }
 
-export default TaskModal;
+export default TaskViewEditPanel;
