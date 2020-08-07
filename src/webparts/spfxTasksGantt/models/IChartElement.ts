@@ -12,4 +12,5 @@ export interface IChartElement {
   labelY: number;
   tooltip: string;
   predecessors: IPredecessor[];
+  completionPercentage: number;
 }

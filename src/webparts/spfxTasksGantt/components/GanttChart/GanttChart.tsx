@@ -153,18 +153,42 @@ export class GanttChart extends React.Component<IGanttChartProps, IGanttChartSta
       .attr('width', d => d.width)
       .attr('height', d => d.height)
       .style('fill', '#ddd')
+      //.style('fill', 'url(#diagonalHatch)')
       .style('stroke', 'black')
       .on('click', (d: IChartElement) => {
-        onTaskClick(d.id);
+        onTaskClick(d.id); 
       });
 
     bars
+      .append('rect')
+      .attr('rx', svgProps.elementHeight / 2)
+      .attr('ry', svgProps.elementHeight / 2)
+      .attr('x', d => d.x)
+      .attr('y', d => d.y)
+      .attr('width', d => d.width * d.completionPercentage)
+      .attr('height', d => d.height)
+      //.style('fill', '#ddd')
+      .style('fill', 'url(#diagonalHatch)')
+      .style('stroke', 'black')
+      .on('click', (d: IChartElement) => {
+        onTaskClick(d.id); 
+      });
+      /* .append('pattern')
+      .attr('patternUnits', 'userSpaceOnUse')
+      .attr('width', '4')
+      .attr('height', '5')
+      .append('path')
+      .attr('d', 'M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2')
+      .style('stroke', 'black')
+      .style('stroke-width', '1'); */
+
+    /* bars
       .append('text')
       .style('fill', 'black')
       .style('font-family', 'sans-serif')
       .attr('x', d => d.labelX)
       .attr('y', d => d.labelY)
-      .text(d => d.label);
+      .text(d => d.label); */
 
     bars
       .append('title')
@@ -205,7 +229,8 @@ export class GanttChart extends React.Component<IGanttChartProps, IGanttChartSta
         labelX: labelX,
         labelY: labelY,
         tooltip: tooltip,
-        predecessors: d.predecessors
+        predecessors: d.predecessors,
+        completionPercentage: d.percentComplete
       };
     });
   }
@@ -280,6 +305,15 @@ export class GanttChart extends React.Component<IGanttChartProps, IGanttChartSta
     return (
       <div className={styles.ganttChart}>
         <svg ref={this._svgRef} width={this._svgWidth} height={this._svgHeight} >
+          <defs>
+          <pattern id='diagonalHatch' patternUnits='userSpaceOnUse' width='4' height='4'>
+            <path d='M-1,1 l2,-2
+              M0,4 l4,-4
+              M3,5 l2,-2' 
+              style={{stroke: 'black', strokeWidth: 1}} 
+            />
+          </pattern>
+          </defs>
         </svg>
       </div>
     );

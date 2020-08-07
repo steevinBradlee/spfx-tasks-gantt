@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ITask } from '../../models/ITask';
 import { IconButton, getTheme, Modal, IIconProps, IDropdownOption, Dropdown, IPersonaProps, PanelType, Panel } from 'office-ui-fabric-react';
-import styles from './TaskViewEditPanel.module.scss';
+import styles from './ViewEditTaskPanel.module.scss';
 import { TextField, MaskedTextField } from 'office-ui-fabric-react/lib/TextField';
 import { Stack, IStackProps, IStackStyles } from 'office-ui-fabric-react/lib/Stack';
 import EditableLabel from '../EditableLabel/EditableLabel';
@@ -39,7 +39,7 @@ const columnProps: Partial<IStackProps> = {
 
 const DROPDOWN_CONTAINER_CLASSNAME = '.ms-Callout.ms-Dropdown-callout';
 
-interface ITaskViewEditPanelProps {
+interface IViewEditTaskPanelProps {
   task: ITask;
   isPanelOpen: boolean;
   setIsPanelOpen: (isOpen: boolean) => any;
@@ -51,7 +51,7 @@ interface ITaskViewEditPanelProps {
   predecessorOptions: IDropdownOption[];
 }
 
-const TaskViewEditPanel: React.FunctionComponent<ITaskViewEditPanelProps> = (props: ITaskViewEditPanelProps) => {
+const ViewEditTaskPanel: React.FunctionComponent<IViewEditTaskPanelProps> = (props: IViewEditTaskPanelProps) => {
   const { isPanelOpen, setIsPanelOpen, task, predecessorOptions, onPropertyChange, onPersonPropertyChange, onPredecessorsPropertyChange, statusOptions, priorityOptions } = props;
 
   const [taskId, setTaskId] = React.useState(task.id);
@@ -309,4 +309,4 @@ function predecessorsString(predecessors: IDropdownOption[]) {
   }, '');
 }
 
-export default TaskViewEditPanel;
+export default ViewEditTaskPanel;

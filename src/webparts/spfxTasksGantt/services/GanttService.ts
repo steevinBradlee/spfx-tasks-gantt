@@ -157,7 +157,7 @@ export class GanttService {
         
         tasks.sort((a, b) => {
           return a.startDate.getTime() - b.startDate.getTime();
-        })
+        });
         return tasks;
       }
       catch (error) {
@@ -168,6 +168,62 @@ export class GanttService {
 
   private _getUserImage(accountName: string): string {
     return `/_layouts/15/userphoto.aspx?Size=L&accountname=${accountName}`;
+  }
+
+  public async newTask(siteUrl: string, listName: string, properties: any): Promise<ITask> {
+    try {
+      const propertiesMapped = Object.keys(properties).reduce((newPropertiesObject, current) => {
+        const spKey = SP_PROPERTY_MAPPINGS[current];
+        if (spKey) {
+          newPropertiesObject[spKey] = properties[current];
+        }
+        return newPropertiesObject;
+      }, {})
+
+      const site = Site(siteUrl);
+      const newTaskResult = await site.rootWeb.lists
+        .getByTitle(listName).items
+        .add(propertiesMapped);
+
+      if (newTaskResult) {
+        let newItem = await newTaskResult.item.select(...TASKS_SELECT_FIELDS).expand(...TASKS_EXPAND_FIELDS).get();
+        if (newItem) {
+          let assignedTo: IUser[] = [];
+          if (newItem.AssignedTo) {
+            assignedTo = newItem.AssignedTo.map(assigned => {
+              return <IUser>{
+                text: assigned.Title,
+                imageUrl: this._getUserImage(assigned.Name),
+                accountName: assigned.Name
+              };
+            });
+          } 
+          return <ITask>{
+            id: newItem.Id,
+            title: newItem.Title,
+            description: newItem.Body,
+            percentComplete: newItem.PercentComplete ? parseFloat(newItem.PercentComplete) : 0,
+            completed: newItem.Checkmark === '0' ? false : true,
+            createdDate: new Date(newItem.Created),
+            startDate: new Date(newItem.StartDate),
+            dueDate: new Date(newItem.DueDate),
+            status: newItem.Status,
+            predecessors: newItem.Predecessors ? 
+              newItem.Predecessors.map(pre => ({ id: pre.Id, title: pre.Title })) : [],
+            assignedTo: assignedTo,
+            createdBy: {
+              text: newItem.Author.Title,
+              accountName: newItem.Author.Name,
+              imageUrl: this._getUserImage(newItem.Author.Name)
+            },
+            priority: newItem.Priority
+          }
+        }
+      }
+    }
+    catch (error) {
+      console.error(error);
+    } 
   }
 
   public async updateTask(siteUrl: string, listName: string, taskId: number, propertyName: string, propertyValue: any) {

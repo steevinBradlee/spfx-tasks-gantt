@@ -7,7 +7,7 @@ export interface ITask {
   title: string;
   description: string;
   percentComplete: number;
-  completed: boolean;
+  //completed: boolean;
   createdDate: Date;
   startDate: Date;
   dueDate: Date;

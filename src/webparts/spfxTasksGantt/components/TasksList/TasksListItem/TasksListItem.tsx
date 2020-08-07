@@ -19,7 +19,7 @@ const TasksListItem = (props: ITasksListItemProps) => {
       <Icon 
         iconName={isCompleted ? IconNames.CheckboxComposite : IconNames.Checkbox}
         onClick={() => {
-          event.stopPropagation()
+          event.stopPropagation();
           onToggleComplete(task.id, !isCompleted);
         }}
       ></Icon>
@@ -32,6 +32,6 @@ const TasksListItem = (props: ITasksListItemProps) => {
       >{ task.title }</Text>
     </div>
   );
-}
+};
 
 export default TasksListItem;

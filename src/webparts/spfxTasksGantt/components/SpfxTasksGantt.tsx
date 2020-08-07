@@ -5,19 +5,21 @@ import { escape, findIndex, find } from '@microsoft/sp-lodash-subset';
 import { GanttService } from '../services/GanttService';
 import { Shimmer } from 'office-ui-fabric-react/lib/Shimmer';
 import { ITask } from '../models/ITask';
-import TaskViewEditPanel from './TaskViewEditPanel/TaskViewEditPanel';
+import ViewEditTaskPanel from './ViewEditTaskPanel/ViewEditTaskPanel';
 import { Site } from '@pnp/sp/sites';
-import { IDropdownOption, IPersonaProps, Text } from 'office-ui-fabric-react';
+import { IDropdownOption, IPersonaProps, Text, CommandBar } from 'office-ui-fabric-react';
 import { equalDatesNoTime } from '../funcs';
 import { GanttChart } from './GanttChart/GanttChart';
 import { IUser } from '../models/IUser';
 import { IPredecessor } from '../models/IPredecessor';
 import TasksList from './TasksList/TasksList';
+import NewTaskPanel from './NewTaskPanel/NewTaskPanel';
 
 
 interface ISpfxTasksGanttState {
   tasks: ITask[];
-  isOpen: boolean;
+  isViewEditOpen: boolean;
+  isNewOpen: boolean;
   selectedTaskId: ITask['id'];
   updatedSelectedTaskProperties: Object;
   statusOptions: IDropdownOption[];
@@ -34,7 +36,8 @@ export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps
 
     this.state = {
       tasks: null,
-      isOpen: false,
+      isViewEditOpen: false,
+      isNewOpen: false,
       selectedTaskId: null,
       updatedSelectedTaskProperties: {},
       statusOptions: null,
@@ -59,16 +62,29 @@ export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps
     });
   }
 
-  public openTaskViewEditPanel = (taskId: number) => {
+  public openViewEditTaskPanel = (taskId: number) => {
     this.setState({
       selectedTaskId: taskId,
-      isOpen: true
+      isViewEditOpen: true
     });
   }
 
-  public setIsOpen = (isOpen: boolean) => {
+  public setIsViewEditOpen = (isOpen: boolean) => {
     this.setState({
-      isOpen: isOpen
+      isViewEditOpen: isOpen
+    });
+  }
+
+  /* public openNewTaskPanel = (taskId: number) => {
+    this.setState({
+      selectedTaskId: taskId,
+      isNewOpen: true
+    });
+  } */
+
+  public setIsNewOpen = (isOpen: boolean) => {
+    this.setState({
+      isNewOpen: isOpen
     });
   }
 
@@ -214,8 +230,43 @@ export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps
     });
   }
 
+  public submitNewTask = async (taskProperties) => {
+    const { tasksListSiteUrl, tasksListTitle } = this.props;
+    console.log(taskProperties);
+
+    let assignedTo: { id: number, accountName: string }[] = [];
+    for (let user of taskProperties['assignedTo']) {
+      if (user.id) {
+        assignedTo.push({
+          id: parseInt(user.id),
+          accountName: user.accountName
+        });
+      }
+      else {
+        let usernameId = await this._ganttService.getUserIdByAccountName(tasksListSiteUrl, user.accountName);
+        assignedTo.push(usernameId);
+      }
+    }
+
+    let assignedToFieldValue = {
+      results: assignedTo.map(persona => persona.id)
+    };
+
+    let newTaskProperties = JSON.parse(JSON.stringify(taskProperties));
+    delete newTaskProperties.assignedTo;
+    newTaskProperties.assignedToId = assignedToFieldValue;
+
+    const newTask = await this._ganttService.newTask(tasksListSiteUrl, tasksListTitle, newTaskProperties);
+
+    if (newTask) {
+      this.setState({
+        tasks: [...this.state.tasks, newTask]
+      })
+    }
+  }
+
   public render(): React.ReactElement<ISpfxTasksGanttProps> {
-    const { tasks, isOpen, selectedTaskId, statusOptions, predecessorOptions, priorityOptions } = this.state;
+    const { tasks, isViewEditOpen, selectedTaskId, statusOptions, predecessorOptions, priorityOptions, isNewOpen } = this.state;
     const { tasksListTitle } = this.props;
 
     let selectedTask = this.state.tasks && this.state.tasks.filter(task => task.id === selectedTaskId)[0];
@@ -229,40 +280,60 @@ export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps
           <div>No tasks found.</div>
         }
         {tasks && tasks.length > 0 && statusOptions &&
-          <div className={styles.container}>
-            <div className={styles.header}>
-              <div>
-                <Text variant='large'>{ tasksListTitle }</Text>
+          <div>
+            <Text variant='large'>{ tasksListTitle }</Text>
+            <CommandBar 
+              items={[{
+                key: 'newItem',
+                text: 'New',
+                cacheKey: 'myCacheKey',
+                iconProps: { iconName: 'Add' },
+                onClick: () => this.setIsNewOpen(true),
+                buttonStyles: {
+                  root: {
+                    border: '0px'
+                  }
+                }
+              }]}
+            />
+            <div className={styles.container}>
+              <div className={styles.body}>
+                <div className={styles.leftCol}>
+                  <TasksList 
+                    tasks={tasks}
+                    onTaskClick={this.openViewEditTaskPanel}
+                    onTaskCompletionToggle={this.toggleTaskStatus}
+                  />
+                </div>
+                <div className={styles.rightCol}>
+                  <GanttChart 
+                    tasks={tasks}
+                    onTaskClick={this.openViewEditTaskPanel}
+                  />
+                </div>
               </div>
-            </div>
-            <div className={styles.body}>
-              <div className={styles.leftCol}>
-                <TasksList 
-                  tasks={tasks}
-                  onTaskClick={this.openTaskViewEditPanel}
-                  onTaskCompletionToggle={this.toggleTaskStatus}
+              {selectedTask &&
+                <ViewEditTaskPanel 
+                  isPanelOpen={isViewEditOpen}
+                  task={selectedTask}
+                  setIsPanelOpen={this.setIsViewEditOpen}
+                  onPropertyChange={this.onTaskPropertyChange}
+                  onPersonPropertyChange={this.onTaskPersonPropertyChange}
+                  onPredecessorsPropertyChange={this.onTaskPredecessorsPropertyChange}
+                  statusOptions={statusOptions}
+                  priorityOptions={priorityOptions}
+                  predecessorOptions={predecessorOptions}
                 />
-              </div>
-              <div className={styles.rightCol}>
-                <GanttChart 
-                  tasks={tasks}
-                  onTaskClick={this.openTaskViewEditPanel}
-                />
-              </div>
-            </div>
-            {selectedTask &&
-              <TaskViewEditPanel 
-                isPanelOpen={isOpen}
-                task={selectedTask}
-                setIsPanelOpen={this.setIsOpen}
-                onPropertyChange={this.onTaskPropertyChange}
-                onPersonPropertyChange={this.onTaskPersonPropertyChange}
-                onPredecessorsPropertyChange={this.onTaskPredecessorsPropertyChange}
+              }
+              <NewTaskPanel 
+                isPanelOpen={isNewOpen}
+                setIsPanelOpen={this.setIsNewOpen}
+                onSubmit={this.submitNewTask}
                 statusOptions={statusOptions}
                 priorityOptions={priorityOptions}
                 predecessorOptions={predecessorOptions}
               />
-            }
+            </div>
           </div>
         }
       </div>
