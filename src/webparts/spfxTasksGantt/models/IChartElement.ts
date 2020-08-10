@@ -13,4 +13,5 @@ export interface IChartElement {
   tooltip: string;
   predecessors: IPredecessor[];
   completionPercentage: number;
+  image?: string;
 }

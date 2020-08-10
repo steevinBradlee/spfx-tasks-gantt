@@ -6,7 +6,7 @@ import { scaleLinear, scaleTime, select } from 'd3';
 import { IChartElement } from '../../models/IChartElement';
 import { ISvgProps } from '../../models/ISvgProps';
 import * as moment from 'moment';
-import { flatten } from '@microsoft/sp-lodash-subset';
+import { flatten, isEmpty } from '@microsoft/sp-lodash-subset';
 import styles from './GanttChart.module.scss';
 
 interface IGanttChartProps {
@@ -16,18 +16,24 @@ interface IGanttChartProps {
 
 interface IGanttChartState {
   tasks: ITask[];
+  numberOfDays: number;
 }
 
 export class GanttChart extends React.Component<IGanttChartProps, IGanttChartState> {
 
   private _svgRef: React.RefObject<SVGSVGElement> = React.createRef();
   private _elementHeight = 20;
-  private _svgWidth = 1200;
+  //private _svgWidth = 1200;
   private _svgHeight = 400;
   private _fontSize = 12;
 
   constructor(props: IGanttChartProps) {
     super(props);
+
+    this.state = {
+      tasks: null,
+      numberOfDays: 0
+    }
   }
 
   public componentDidMount() {
@@ -36,13 +42,22 @@ export class GanttChart extends React.Component<IGanttChartProps, IGanttChartSta
     sortedTasks.sort((a, b) => {
       return a.startDate.getTime() - b.startDate.getTime();
     });
+
+    const { minStart, maxEnd } = this._findDateBoundaries(tasks);
+    const daysBetweenFirstLastTasks = Math.abs(moment(minStart).diff(moment(maxEnd), 'days'));
+
     this.setState({
-      tasks: sortedTasks
+      tasks: sortedTasks,
+      numberOfDays: daysBetweenFirstLastTasks
     }, () => {
       this._createGanttChart(this._elementHeight, 'date', true, {
-        width: this._svgWidth,
+        width: this.state.numberOfDays * 20,
         height: this._svgHeight,
-        fontSize: this._fontSize
+        fontSize: this._fontSize,
+        margin: {
+          top: this._elementHeight * 2,
+          left: this._elementHeight * 2
+        }
       });
     });
   }
@@ -54,13 +69,20 @@ export class GanttChart extends React.Component<IGanttChartProps, IGanttChartSta
       sortedTasks.sort((a, b) => {
         return a.startDate.getTime() - b.startDate.getTime();
       });
+      const { minStart, maxEnd } = this._findDateBoundaries(tasks);
+      const daysBetweenFirstLastTasks = Math.abs(moment(minStart).diff(moment(maxEnd), 'days'));
       this.setState({
-        tasks: sortedTasks
+        tasks: sortedTasks,
+        numberOfDays: daysBetweenFirstLastTasks
       }, () => {
         this._createGanttChart(this._elementHeight, 'date', true, {
-          width: this._svgWidth,
+          width: this.state.numberOfDays * 20,
           height: this._svgHeight,
-          fontSize: this._fontSize
+          fontSize: this._fontSize,
+          margin: {
+            top: this._elementHeight * 2,
+            left: this._elementHeight * 2
+          }
         });
       });
     }
@@ -68,16 +90,12 @@ export class GanttChart extends React.Component<IGanttChartProps, IGanttChartSta
 
   private _createGanttChart(elementHeight: number, sortMode: string, showRelations: boolean, svgOptions: any) {
     const { tasks } = this.state;
-    const margin = (svgOptions && svgOptions.margin) || {
-      top: elementHeight * 2,
-      left: elementHeight * 2
-    };
   
-    const scaleWidth = ((svgOptions && svgOptions.width) || 600) - (margin.left * 2);
-    const scaleHeight = Math.max((svgOptions && svgOptions.height) || 200, tasks.length * elementHeight * 2) - (margin.top * 2);
+    const scaleWidth = ((svgOptions && svgOptions.width) || 1200) - (svgOptions.margin.left * 2);
+    const scaleHeight = Math.max((svgOptions && svgOptions.height) || 420, tasks.length * elementHeight * 2) - (svgOptions.margin.top * 2);
   
-    const svgWidth = scaleWidth + (margin.left * 2);
-    const svgHeight = scaleHeight + (margin.top * 2);
+    const svgWidth = scaleWidth + (svgOptions.margin.left * 2);
+    const svgHeight = scaleHeight + (svgOptions.margin.top * 2);
   
     const fontSize = (svgOptions && svgOptions.fontSize) || 12;
 
@@ -95,7 +113,7 @@ export class GanttChart extends React.Component<IGanttChartProps, IGanttChartSta
       fontSize: fontSize,
       minStartDate: minStart,
       maxEndDate: maxEnd,
-      margin: margin,
+      margin: svgOptions.margin,
       showRelations: showRelations
     };
 
@@ -106,14 +124,15 @@ export class GanttChart extends React.Component<IGanttChartProps, IGanttChartSta
     const { onTaskClick } = this.props;
     const { tasks } = this.state;
 
+    const daysBetweenFirstLastTasks = Math.abs(svgProps.minStartDate.diff(svgProps.maxEndDate, 'days'));
     const xScale = scaleTime()
       .domain([svgProps.minStartDate, svgProps.maxEndDate])
-      .range([0, svgProps.scaleWidth]);
+      .range([0, daysBetweenFirstLastTasks * 20]);
 
     // Prepare data for every data element
     const rectangleData = this._createElementData(tasks, svgProps.elementHeight, xScale, svgProps.fontSize);
 
-    const xAxis = d3.axisBottom(xScale);
+    const xAxis = d3.axisBottom(xScale).ticks(daysBetweenFirstLastTasks, '%d')
     
     // Creat container for data points
     const g1 = select(this._svgRef.current).append('g').attr('transform', `translate(${svgProps.margin.left}, ${svgProps.margin.top})`);
@@ -167,7 +186,6 @@ export class GanttChart extends React.Component<IGanttChartProps, IGanttChartSta
       .attr('y', d => d.y)
       .attr('width', d => d.width * d.completionPercentage)
       .attr('height', d => d.height)
-      //.style('fill', '#ddd')
       .style('fill', 'url(#diagonalHatch)')
       .style('stroke', 'black')
       .on('click', (d: IChartElement) => {
@@ -193,6 +211,15 @@ export class GanttChart extends React.Component<IGanttChartProps, IGanttChartSta
     bars
       .append('title')
       .text(d => d.tooltip);
+
+    bars
+      .append('image')
+      .attr('x', d => d.x)
+      .attr('y', d => d.y)
+      .attr('xlink:href', d => d.image)
+      .attr('width', d => d.height)
+      .attr('height', d => d.height)
+      .attr('clip-path','circle(50%)');
   } 
 
   private _createElementData(data: ITask[], elementHeight: number, xScale: d3.ScaleTime<number, number>, fontSize: number): IChartElement[] {
@@ -230,7 +257,8 @@ export class GanttChart extends React.Component<IGanttChartProps, IGanttChartSta
         labelY: labelY,
         tooltip: tooltip,
         predecessors: d.predecessors,
-        completionPercentage: d.percentComplete
+        completionPercentage: d.percentComplete,
+        image: !isEmpty(d.assignedTo) ? d.assignedTo[0].imageUrl : ''
       };
     });
   }
@@ -302,19 +330,26 @@ export class GanttChart extends React.Component<IGanttChartProps, IGanttChartSta
   }
 
   public render() {
+    const { tasks, numberOfDays } = this.state;
+    const leftRightMargins = this._elementHeight * 8;
     return (
       <div className={styles.ganttChart}>
-        <svg ref={this._svgRef} width={this._svgWidth} height={this._svgHeight} >
-          <defs>
-          <pattern id='diagonalHatch' patternUnits='userSpaceOnUse' width='4' height='4'>
-            <path d='M-1,1 l2,-2
-              M0,4 l4,-4
-              M3,5 l2,-2' 
-              style={{stroke: 'black', strokeWidth: 1}} 
-            />
-          </pattern>
-          </defs>
-        </svg>
+        {tasks &&
+          <svg ref={this._svgRef} width={(numberOfDays * 20) + leftRightMargins} height={this._svgHeight} >
+            <defs>
+              <pattern id='diagonalHatch' patternUnits='userSpaceOnUse' width='4' height='4'>
+                <path d='M-1,1 l2,-2
+                  M0,4 l4,-4
+                  M3,5 l2,-2' 
+                  style={{stroke: 'black', strokeWidth: 1}} 
+                />
+              </pattern>
+              <clipPath id='avatarCircle'>
+                <circle cx='10' cy='10' r='10'></circle>
+              </clipPath>
+            </defs>
+          </svg>
+        }
       </div>
     );
   }

@@ -128,7 +128,7 @@ export class GanttService {
             assignedTo = listItem.AssignedTo.map(assigned => {
               return <IUser>{
                 text: assigned.Title,
-                imageUrl: this._getUserImage(assigned.Name),
+                imageUrl: 'https://worldbusinessfitness.com/wp-content/uploads/2018/01/opulent-profile-square-07.jpg',//this._getUserImage(assigned.Name),
                 accountName: assigned.Name
               };
             });
