@@ -1,0 +1,26 @@
+.monthsRow {
+  display: inline-flex;
+  border: solid thin lightblue;
+  height: 45px;
+  align-items: center;
+
+  .month {
+    font-weight: bold;
+    text-transform: uppercase;
+    border-right: solid thin lightblue;
+    height: 100%;
+    display: flex;
+    align-items: center;
+
+    > div {
+      > div {
+        padding-left: 30px;
+        color: lightblue;
+      }
+    }
+
+    &:last-child {
+      border: 0px;
+    }
+  }
+}

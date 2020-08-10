@@ -9,11 +9,12 @@ import ViewEditTaskPanel from './ViewEditTaskPanel/ViewEditTaskPanel';
 import { Site } from '@pnp/sp/sites';
 import { IDropdownOption, IPersonaProps, Text, CommandBar } from 'office-ui-fabric-react';
 import { equalDatesNoTime } from '../funcs';
-import { GanttChart } from './GanttChart/GanttChart';
+import { GanttChartSvg } from './GanttChartSvg/GanttChartSvg';
 import { IUser } from '../models/IUser';
 import { IPredecessor } from '../models/IPredecessor';
 import TasksList from './TasksList/TasksList';
 import NewTaskPanel from './NewTaskPanel/NewTaskPanel';
+import GanttChart from './GanttChart/GanttChart';
 
 
 interface ISpfxTasksGanttState {
@@ -306,10 +307,12 @@ export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps
                   />
                 </div>
                 <div className={styles.rightCol}>
-                  <GanttChart 
-                    tasks={tasks}
-                    onTaskClick={this.openViewEditTaskPanel}
-                  />
+                  <div style={{overflowX: 'scroll'}}>
+                    <GanttChart
+                      tasks={tasks}
+                      //onTaskClick={this.openViewEditTaskPanel}
+                    />
+                  </div>
                 </div>
               </div>
               {selectedTask &&

@@ -178,7 +178,7 @@ export class GanttService {
           newPropertiesObject[spKey] = properties[current];
         }
         return newPropertiesObject;
-      }, {})
+      }, {});
 
       const site = Site(siteUrl);
       const newTaskResult = await site.rootWeb.lists
@@ -217,7 +217,7 @@ export class GanttService {
               imageUrl: this._getUserImage(newItem.Author.Name)
             },
             priority: newItem.Priority
-          }
+          };
         }
       }
     }

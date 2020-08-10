@@ -1,3 +1,9 @@
 .ganttChart {
-  overflow: scroll;
+  display: block;
+  position: relative;
+
+  .chart {
+    position: relative;
+    min-height: 250px;
+  }
 }

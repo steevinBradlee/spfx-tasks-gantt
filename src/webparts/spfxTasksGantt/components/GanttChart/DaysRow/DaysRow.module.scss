@@ -1,0 +1,18 @@
+.daysRow {
+  display: inline-flex;
+  border: solid thin lightblue;
+  border-top: 0px;
+
+  .day {
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: solid thin lightblue;
+    font-size: 12px;
+
+    &:last-child {
+      border-right: 0px;
+    }
+  }
+}
