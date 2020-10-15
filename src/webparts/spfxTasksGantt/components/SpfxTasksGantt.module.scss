@@ -1,9 +1,16 @@
 @import '~office-ui-fabric-react/dist/sass/References.scss';
 
 .spfxTasksGantt {
-  border: solid thin lightgray;
   .container {
     /* box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 25px 50px 0 rgba(0, 0, 0, 0.1); */
+    border: solid thin lightblue;
+  }
+
+  .listTitle {
+    font-size: 20px;
+    font-weight: 600;
+    color: black;
+    padding: 10px 0px 18px 0px;
   }
 
   .header {
@@ -25,12 +32,14 @@
     .leftCol {
       @include ms-Grid-col;
       @include ms-sm3;
+      padding-right: 0px;
     }
 
     .rightCol {
       @include ms-Grid-col;
       @include ms-sm9;
-      border-left: solid 2px gray;
+      padding-left: 0px;
+      //border-left: solid 2px gray;
     }
   }
   

@@ -3,7 +3,7 @@
 .container {
   .header {
     padding: 0px 20px;
-    border-bottom: solid thin lightgray;
+    border-bottom: solid 1px lightgray;
   }
 
   .body {
@@ -11,7 +11,12 @@
   }
 
   .footer {
-    padding: 0px 20px;
+    padding-top: 20px;
     padding-bottom: 40px;
+    display: flex;
+
+    > button:first-child {
+      margin-right: 15px;
+    }
   }
 }

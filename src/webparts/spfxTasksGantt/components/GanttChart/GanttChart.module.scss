@@ -1,9 +1,26 @@
 .ganttChart {
   display: block;
   position: relative;
+  padding-bottom: 50px;
 
   .chart {
     position: relative;
-    min-height: 250px;
+    display: inline-flex;
+
+    .grid {
+      display: grid;
+      grid-gap: 0px;
+      border-bottom: solid 1px lightblue;
+      margin-left: -1px;
+  
+      .cell {
+        border-left: 1px solid lightblue;
+        border-top: 1px solid lightblue;
+
+        &.first {
+          border-left: 0px;
+        }
+      }
+    }
   }
 }

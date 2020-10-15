@@ -1,18 +1,12 @@
 import * as React from 'react';
-import { ITask } from '../../models/ITask';
-import { IconButton, getTheme, Modal, IIconProps, IDropdownOption, Dropdown, IPersonaProps, PanelType, Panel, DefaultButton, PrimaryButton } from 'office-ui-fabric-react';
+import { IDropdownOption, Dropdown, PanelType, Panel, DefaultButton, PrimaryButton } from '@fluentui/react';
 import styles from './NewTaskPanel.module.scss';
-import { TextField, MaskedTextField } from 'office-ui-fabric-react/lib/TextField';
-import { Stack, IStackProps, IStackStyles, StackItem } from 'office-ui-fabric-react/lib/Stack';
-import EditableLabel from '../EditableLabel/EditableLabel';
+import { TextField } from '@fluentui/react';
 import CalendarInput from '../CalendarInput/CalendarInput';
-import calendarStyles from '../CalendarInput/CalendarInput.module.scss';
-import { find, isEmpty } from '@microsoft/sp-lodash-subset';
+import { isEmpty } from '@microsoft/sp-lodash-subset';
 import GanttPeoplePicker from '../GanttPeoplePicker/GanttPeoplePicker';
-import peoplePickerStyles from '../GanttPeoplePicker/GanttPeoplePicker.module.scss';
 import { IUser } from '../../models/IUser';
 import NumberInput from '../NumberInput/NumberInput';
-import { IPredecessor } from '../../models/IPredecessor';
 
 const DROPDOWN_CONTAINER_CLASSNAME = '.ms-Callout.ms-Dropdown-callout';
 
@@ -20,8 +14,6 @@ interface INewTaskPanelProps {
   isPanelOpen: boolean;
   setIsPanelOpen: (isOpen: boolean) => any;
   onSubmit: (taskProperties: any) => any;
-  //onPersonPropertyChange: (taskId: number, propertyName: string, propertyValue: any) => any;
-  //onPredecessorsPropertyChange: (taskId: number, predecessors: IPredecessor[]) => any;
   statusOptions: IDropdownOption[];
   priorityOptions: IDropdownOption[];
   predecessorOptions: IDropdownOption[];
@@ -84,7 +76,7 @@ const NewTaskPanel = (props: INewTaskPanelProps) => {
         isOpen={isPanelOpen}
         type={PanelType.medium}
         closeButtonAriaLabel='Close'
-        headerText='Edit Task'
+        headerText='New Task'
         onDismiss={() => setIsPanelOpen(false)}
       >
         <div className={styles.container}>
@@ -120,6 +112,7 @@ const NewTaskPanel = (props: INewTaskPanelProps) => {
                     //errorMessage={`You can't leave this blank`}
                     autoFocus
                     componentRef={titleRef}
+                    
                     /* onGetErrorMessage={value => {
                       return titleRef.current && !isFocused(titleRef.current) ? (isEmpty(value) ? `You can't leave this blank` : '') : '';
                     }} */
@@ -214,7 +207,7 @@ const NewTaskPanel = (props: INewTaskPanelProps) => {
                   />
                 </div>
               </div>
-              <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+              <div className={styles.footer}>
                 <PrimaryButton disabled={!isValid} text='Save' type='submit'/* onClick={() => setIsPanelOpen(false)} */ />
                 <DefaultButton text='Cancel' onClick={() => setIsPanelOpen(false)} />
               </div>

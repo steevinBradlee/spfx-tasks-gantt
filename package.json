@@ -12,15 +12,17 @@
     "test": "gulp test"
   },
   "dependencies": {
+    "@fluentui/react": "^7.146.2",
     "@microsoft/sp-core-library": "1.11.0",
     "@microsoft/sp-lodash-subset": "1.11.0",
     "@microsoft/sp-office-ui-fabric-core": "1.11.0",
     "@microsoft/sp-property-pane": "1.11.0",
     "@microsoft/sp-webpart-base": "1.11.0",
     "@pnp/sp": "^2.0.7",
+    "@pnp/spfx-controls-react": "^2.0.0",
     "d3": "^5.16.0",
     "moment": "^2.27.0",
-    "office-ui-fabric-react": "6.214.0",
+    "office-ui-fabric-react": "^6.214.0",
     "react": "16.8.5",
     "react-dom": "16.8.5",
     "react-hook-form": "^6.2.0"

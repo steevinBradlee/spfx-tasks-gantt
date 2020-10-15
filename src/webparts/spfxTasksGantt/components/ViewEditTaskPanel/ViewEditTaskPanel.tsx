@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { ITask } from '../../models/ITask';
-import { IconButton, getTheme, Modal, IIconProps, IDropdownOption, Dropdown, IPersonaProps, PanelType, Panel } from 'office-ui-fabric-react';
+import { getTheme, IIconProps, IDropdownOption, Dropdown, PanelType, Panel } from '@fluentui/react';
 import styles from './ViewEditTaskPanel.module.scss';
-import { TextField, MaskedTextField } from 'office-ui-fabric-react/lib/TextField';
-import { Stack, IStackProps, IStackStyles } from 'office-ui-fabric-react/lib/Stack';
+import { TextField, MaskedTextField } from '@fluentui/react';
+import { Stack, IStackProps, IStackStyles } from '@fluentui/react';
 import EditableLabel from '../EditableLabel/EditableLabel';
 import CalendarInput from '../CalendarInput/CalendarInput';
 import calendarStyles from '../CalendarInput/CalendarInput.module.scss';

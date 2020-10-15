@@ -1,5 +1,26 @@
+@import '~office-ui-fabric-react/dist/sass/References.scss';
+
 .taskRow {
-  display: block;
+  display: flex;
+  align-items: center;
   position: absolute;
-  background-color: lightgreen;
+  background-color: $ms-color-themePrimary;
+  cursor: pointer;
+
+  .completionAmount {
+    background-color: $ms-color-themeSecondary;
+    height: 70%;
+  }
+
+  .assignedTo {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    overflow: hidden;
+
+    img {
+      max-width: 100%;
+      max-height: 100%;
+    }
+  }
 }

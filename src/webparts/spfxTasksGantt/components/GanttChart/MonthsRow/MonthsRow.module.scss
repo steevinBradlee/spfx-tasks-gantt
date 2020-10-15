@@ -1,13 +1,15 @@
 .monthsRow {
   display: inline-flex;
-  border: solid thin lightblue;
+  border: solid 1px lightblue;
+  border-top: 0px;
+  border-left: 0px;
   height: 45px;
   align-items: center;
 
   .month {
     font-weight: bold;
     text-transform: uppercase;
-    border-right: solid thin lightblue;
+    border-right: solid 1px lightblue;
     height: 100%;
     display: flex;
     align-items: center;

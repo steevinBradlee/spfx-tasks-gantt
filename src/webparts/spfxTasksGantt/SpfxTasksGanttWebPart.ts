@@ -20,6 +20,7 @@ export interface ISpfxTasksGanttWebPartProps {
   description: string;
   tasksListSiteUrl: string;
   tasksListTitle: string;
+  title: string;
 }
 
 export default class SpfxTasksGanttWebPart extends BaseClientSideWebPart<ISpfxTasksGanttWebPartProps> {
@@ -31,7 +32,12 @@ export default class SpfxTasksGanttWebPart extends BaseClientSideWebPart<ISpfxTa
       SpfxTasksGantt,
       {
         tasksListSiteUrl: this.properties.tasksListSiteUrl,
-        tasksListTitle: this.properties.tasksListTitle
+        tasksListTitle: this.properties.tasksListTitle,
+        title: this.properties.title,
+        displayMode: this.displayMode,
+        updateProperty: (value: string) => {
+          this.properties.title = value;
+        }
       }
     );
 

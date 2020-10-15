@@ -1,21 +1,19 @@
 import * as React from 'react';
 import styles from './SpfxTasksGantt.module.scss';
 import { ISpfxTasksGanttProps } from './ISpfxTasksGanttProps';
-import { escape, findIndex, find } from '@microsoft/sp-lodash-subset';
+import { findIndex, find } from '@microsoft/sp-lodash-subset';
 import { GanttService } from '../services/GanttService';
-import { Shimmer } from 'office-ui-fabric-react/lib/Shimmer';
+import { Shimmer } from '@fluentui/react';
 import { ITask } from '../models/ITask';
 import ViewEditTaskPanel from './ViewEditTaskPanel/ViewEditTaskPanel';
-import { Site } from '@pnp/sp/sites';
-import { IDropdownOption, IPersonaProps, Text, CommandBar } from 'office-ui-fabric-react';
+import { IDropdownOption, DefaultButton } from '@fluentui/react';
 import { equalDatesNoTime } from '../funcs';
-import { GanttChartSvg } from './GanttChartSvg/GanttChartSvg';
 import { IUser } from '../models/IUser';
 import { IPredecessor } from '../models/IPredecessor';
 import TasksList from './TasksList/TasksList';
 import NewTaskPanel from './NewTaskPanel/NewTaskPanel';
 import GanttChart from './GanttChart/GanttChart';
-
+import { WebPartTitle } from '@pnp/spfx-controls-react/lib/WebPartTitle';
 
 interface ISpfxTasksGanttState {
   tasks: ITask[];
@@ -282,8 +280,19 @@ export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps
         }
         {tasks && tasks.length > 0 && statusOptions &&
           <div>
-            <Text variant='large'>{ tasksListTitle }</Text>
-            <CommandBar 
+            <WebPartTitle 
+              displayMode={this.props.displayMode}
+              title={this.props.title}
+              updateProperty={this.props.updateProperty}
+              moreLink={() => {
+                return (
+                  <DefaultButton text='New Item' onClick={() => this.setIsNewOpen(true)}/>
+                )
+              }}
+              
+            />
+            <div className={styles.listTitle}>{ tasksListTitle }</div>
+            {/* <CommandBar 
               items={[{
                 key: 'newItem',
                 text: 'New',
@@ -296,21 +305,23 @@ export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps
                   }
                 }
               }]}
-            />
+            /> */}
             <div className={styles.container}>
               <div className={styles.body}>
                 <div className={styles.leftCol}>
-                  <TasksList 
-                    tasks={tasks}
-                    onTaskClick={this.openViewEditTaskPanel}
-                    onTaskCompletionToggle={this.toggleTaskStatus}
-                  />
+                  <div style={{paddingTop: '76px', paddingBottom: '50px'}}>
+                    <TasksList 
+                      tasks={tasks}
+                      onTaskClick={this.openViewEditTaskPanel}
+                      onTaskCompletionToggle={this.toggleTaskStatus}
+                    />
+                  </div>
                 </div>
                 <div className={styles.rightCol}>
-                  <div style={{overflowX: 'scroll'}}>
+                  <div style={{overflowX: 'scroll', borderLeft: 'solid 2px lightblue'}}>
                     <GanttChart
                       tasks={tasks}
-                      //onTaskClick={this.openViewEditTaskPanel}
+                      onTaskClick={this.openViewEditTaskPanel}
                     />
                   </div>
                 </div>

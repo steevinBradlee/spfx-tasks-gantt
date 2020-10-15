@@ -8,10 +8,11 @@ import TaskRow from './TaskRow/TaskRow';
 
 interface IGanttChartProps {
   tasks: ITask[];
+  onTaskClick: (taskId: number) => void;
 }
 
 const GanttChart = (props: IGanttChartProps) => {
-  const { tasks } = props;
+  const { tasks, onTaskClick } = props;
 
   const columnWidth = 28;
   const rowHeight = 25;
@@ -19,6 +20,18 @@ const GanttChart = (props: IGanttChartProps) => {
   const { minStart, maxEnd } = findDateBoundaries(tasks);
   const paddedStart = minStart.subtract(5, 'days');
   const paddedEnd = maxEnd.add(5, 'days');
+
+  let days = [];
+  let date = moment(paddedStart);
+  while (date.isBefore(paddedEnd)) {
+    days.push(date.date());
+    date = date.add(1, 'day');
+  }
+
+  const gridStyle: React.CSSProperties = {
+    gridTemplateColumns: `repeat(${days.length}, ${columnWidth + 1}px)`,
+    gridTemplateRows: `repeat(${tasks.length}, ${rowHeight}px)`
+  }
 
   return (
     <div className={styles.ganttChart}>
@@ -31,17 +44,29 @@ const GanttChart = (props: IGanttChartProps) => {
         minDate={paddedStart}
         maxDate={paddedEnd}
         dayColumnWidth={columnWidth}
+        days={days}
       />
-      <div className={styles.chart} style={{height: tasks.length * rowHeight}} >
-        {tasks.map((task, index) => (
-          <TaskRow 
-            task={task} 
-            height={rowHeight}
-            dayWidth={28}
-            x={0}
-            y={index * rowHeight}
-          />
-        ))}
+      <div className={styles.chart} >
+        <div className={styles.grid} style={gridStyle}>
+          {tasks.map(row => {
+            return days.map((col, colIndex) => (
+              <div className={`${styles.cell} ${colIndex === 0 ? styles.first : ''}`} /* style={{height: `${rowHeight}px`}} */></div>
+            ))
+          })}
+        </div>
+        {tasks.map((task, index) => {
+          let numDaysFromStart = numDaysBetween(paddedStart, moment(task.startDate));
+          return (
+            <TaskRow 
+              task={task} 
+              height={rowHeight}
+              dayWidth={columnWidth}
+              x={(numDaysFromStart * columnWidth) + numDaysFromStart}
+              y={(index * rowHeight) + 2}
+              onTaskClick={onTaskClick}
+            />
+          );
+        })}
       </div>
     </div>
   );
@@ -60,6 +85,10 @@ const findDateBoundaries = (data: ITask[]): { minStart: moment.Moment, maxEnd: m
     minStart: minStartDate,
     maxEnd: maxEndDate
   };
+}
+
+const numDaysBetween = (date1: moment.Moment, date2: moment.Moment): number => {
+  return Math.abs(date1.diff(date2, 'days'));
 }
 
 export default GanttChart;

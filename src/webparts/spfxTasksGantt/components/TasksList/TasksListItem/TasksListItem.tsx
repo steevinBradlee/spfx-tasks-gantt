@@ -7,15 +7,16 @@ interface ITasksListItemProps {
   task: ITask;
   onClick: (taskId: number) => void;
   onToggleComplete: (taskId: number, isComplete: boolean) => void;
+  style?: React.CSSProperties;
 }
 
 const TasksListItem = (props: ITasksListItemProps) => {
-  const { task, onClick, onToggleComplete } = props;
+  const { task, onClick, onToggleComplete, style } = props;
 
   let isCompleted = task.status === 'Completed';
 
   return (
-    <div className={`${styles.tasksListItem} ${isCompleted && styles.completed}`}>
+    <div className={`${styles.tasksListItem} ${isCompleted && styles.completed}`} style={{...style}}>
       <Icon 
         iconName={isCompleted ? IconNames.CheckboxComposite : IconNames.Checkbox}
         onClick={() => {
@@ -24,7 +25,7 @@ const TasksListItem = (props: ITasksListItemProps) => {
         }}
       ></Icon>
       <Text 
-        variant='mediumPlus' 
+        variant='smallPlus' 
         onClick={(event) => {
           event.stopPropagation();
           onClick(task.id);

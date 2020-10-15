@@ -23,7 +23,7 @@ const TasksList = (props: ITasksListProps) => {
   return (
     <div className={styles.tasksList}>
       <Stack>
-        {tasks.map(task => (
+        {tasks.map((task, index) => (
           <StackItem>
             <TasksListItem 
               task={task}

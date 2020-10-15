@@ -6,17 +6,18 @@ interface IDaysRowProps {
   dayColumnWidth: number;
   minDate: moment.Moment;
   maxDate: moment.Moment;
+  days: number[];
 }
 
 const DaysRow = (props: IDaysRowProps) => {
-  const { minDate, maxDate, dayColumnWidth } = props;
+  const { days, dayColumnWidth } = props;
 
-  let days = [];
+  /* let days = [];
   let date = minDate;
   while (date.isBefore(maxDate)) {
     days.push(date.date());
     date = date.add(1, 'day');
-  }
+  } */
 
   return (
     <div className={styles.daysRow}>
