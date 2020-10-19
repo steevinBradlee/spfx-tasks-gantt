@@ -1,7 +1,7 @@
 import * as React from 'react';
 import styles from './SpfxTasksGantt.module.scss';
 import { ISpfxTasksGanttProps } from './ISpfxTasksGanttProps';
-import { findIndex, find } from '@microsoft/sp-lodash-subset';
+import { findIndex, find, isEmpty } from '@microsoft/sp-lodash-subset';
 import { GanttService } from '../services/GanttService';
 import { Shimmer } from '@fluentui/react';
 import { ITask } from '../models/ITask';
@@ -14,8 +14,11 @@ import TasksList from './TasksList/TasksList';
 import NewTaskPanel from './NewTaskPanel/NewTaskPanel';
 import GanttChart from './GanttChart/GanttChart';
 import { WebPartTitle } from '@pnp/spfx-controls-react/lib/WebPartTitle';
+import Empty from './Empty/Empty';
 
 interface ISpfxTasksGanttState {
+  tasksList: String;
+  tasksListUrl: String;
   tasks: ITask[];
   isViewEditOpen: boolean;
   isNewOpen: boolean;
@@ -34,6 +37,8 @@ export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps
     super(props);
 
     this.state = {
+      tasksList: null,
+      tasksListUrl: null,
       tasks: null,
       isViewEditOpen: false,
       isNewOpen: false,
@@ -45,20 +50,68 @@ export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps
     };
   }
 
+  /* static async getDerivedStateFromProps(props: ISpfxTasksGanttProps, state: ISpfxTasksGanttState) {
+    if (props.tasksListTitle !== state.tasksList || props.tasksListSiteUrl !== state.tasksListUrl) {
+      let ganttService = GanttService.getInstance();
+      if (!isEmpty(props.tasksListSiteUrl) && !isEmpty(props.tasksListTitle)) {
+        let tasks = await ganttService.getTasks(props.tasksListSiteUrl, props.tasksListTitle);
+        if (tasks) {
+          let statusOptions = await ganttService.getStatusDropdownOptions(props.tasksListSiteUrl, props.tasksListTitle);
+          let priorityOptions = await ganttService.getPriorityDropdownOptions(props.tasksListSiteUrl, props.tasksListTitle);
+          let predecessorOptions: IDropdownOption[] = tasks.map(task => ({ text: task.title, key: `${task.id}` }));
+          return {
+            tasksList: props.tasksListTitle,
+            tasksListSiteUrl: props.tasksListSiteUrl,
+            tasks: tasks,
+            statusOptions: statusOptions,
+            priorityOptions: priorityOptions,
+            predecessorOptions: predecessorOptions
+          };
+        }
+      }
+    }
+
+    return null;
+  } */
+
   public async componentDidMount() {
     const { tasksListSiteUrl, tasksListTitle } = this.props;
 
     this._ganttService = GanttService.getInstance();
-    let tasks = await this._ganttService.getTasks(tasksListSiteUrl, tasksListTitle);
-    let statusOptions = await this._ganttService.getStatusDropdownOptions(tasksListSiteUrl, tasksListTitle);
-    let priorityOptions = await this._ganttService.getPriorityDropdownOptions(tasksListSiteUrl, tasksListTitle);
-    let predecessorOptions: IDropdownOption[] = tasks.map(task => ({ text: task.title, key: `${task.id}` }));
-    this.setState({
-      tasks: tasks,
-      statusOptions: statusOptions,
-      priorityOptions: priorityOptions,
-      predecessorOptions: predecessorOptions
-    });
+
+    if (!isEmpty(tasksListSiteUrl) && !isEmpty(tasksListTitle)) {
+      let tasks = await this._ganttService.getTasks(tasksListSiteUrl, tasksListTitle);
+      if (tasks) {
+        let statusOptions = await this._ganttService.getStatusDropdownOptions(tasksListSiteUrl, tasksListTitle);
+        let priorityOptions = await this._ganttService.getPriorityDropdownOptions(tasksListSiteUrl, tasksListTitle);
+        let predecessorOptions: IDropdownOption[] = tasks.map(task => ({ text: task.title, key: `${task.id}` }));
+        this.setState({
+          tasks: tasks,
+          statusOptions: statusOptions,
+          priorityOptions: priorityOptions,
+          predecessorOptions: predecessorOptions
+        });
+      }
+    }
+  }
+
+  public async componentDidUpdate(prevProps: ISpfxTasksGanttProps) {
+    if (this.props.tasksListSiteUrl !== prevProps.tasksListSiteUrl || this.props.tasksListTitle !== prevProps.tasksListTitle) {
+      if (!isEmpty(this.props.tasksListSiteUrl) && !isEmpty(this.props.tasksListTitle)) {
+        let tasks = await this._ganttService.getTasks(this.props.tasksListSiteUrl, this.props.tasksListTitle);
+        if (tasks) {
+          let statusOptions = await this._ganttService.getStatusDropdownOptions(this.props.tasksListSiteUrl, this.props.tasksListTitle);
+          let priorityOptions = await this._ganttService.getPriorityDropdownOptions(this.props.tasksListSiteUrl, this.props.tasksListTitle);
+          let predecessorOptions: IDropdownOption[] = tasks.map(task => ({ text: task.title, key: `${task.id}` }));
+          this.setState({
+            tasks: tasks,
+            statusOptions: statusOptions,
+            priorityOptions: priorityOptions,
+            predecessorOptions: predecessorOptions
+          });
+        }
+      }
+    }
   }
 
   public openViewEditTaskPanel = (taskId: number) => {
@@ -73,13 +126,6 @@ export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps
       isViewEditOpen: isOpen
     });
   }
-
-  /* public openNewTaskPanel = (taskId: number) => {
-    this.setState({
-      selectedTaskId: taskId,
-      isNewOpen: true
-    });
-  } */
 
   public setIsNewOpen = (isOpen: boolean) => {
     this.setState({
@@ -266,89 +312,101 @@ export default class SpfxTasksGantt extends React.Component<ISpfxTasksGanttProps
 
   public render(): React.ReactElement<ISpfxTasksGanttProps> {
     const { tasks, isViewEditOpen, selectedTaskId, statusOptions, predecessorOptions, priorityOptions, isNewOpen } = this.state;
-    const { tasksListTitle } = this.props;
+    const { tasksListTitle, tasksListSiteUrl } = this.props;
 
     let selectedTask = this.state.tasks && this.state.tasks.filter(task => task.id === selectedTaskId)[0];
 
     return (
       <div className={ styles.spfxTasksGantt }>
-        {tasks === null &&
-          <Shimmer />
-        }
-        {tasks && tasks.length === 0 &&
-          <div>No tasks found.</div>
-        }
-        {tasks && tasks.length > 0 && statusOptions &&
-          <div>
-            <WebPartTitle 
-              displayMode={this.props.displayMode}
-              title={this.props.title}
-              updateProperty={this.props.updateProperty}
-              moreLink={() => {
-                return (
-                  <DefaultButton text='New Item' onClick={() => this.setIsNewOpen(true)}/>
-                )
-              }}
-              
-            />
-            <div className={styles.listTitle}>{ tasksListTitle }</div>
-            {/* <CommandBar 
-              items={[{
-                key: 'newItem',
-                text: 'New',
-                cacheKey: 'myCacheKey',
-                iconProps: { iconName: 'Add' },
-                onClick: () => this.setIsNewOpen(true),
-                buttonStyles: {
-                  root: {
-                    border: '0px'
-                  }
+        {isEmpty(tasksListTitle) || isEmpty(tasksListSiteUrl) ?
+          <Empty />
+          :
+          <>
+            {tasks === null ?
+              <Shimmer />
+              :
+              <>
+                {tasks && tasks.length === 0 ?
+                  <div>No tasks found.</div>
+                  :
+                  <>
+                    {tasks && tasks.length > 0 && statusOptions &&
+                      <div>
+                        <WebPartTitle 
+                          displayMode={this.props.displayMode}
+                          title={this.props.title}
+                          updateProperty={this.props.updateProperty}
+                          moreLink={() => {
+                            return (
+                              <DefaultButton text='New Item' onClick={() => this.setIsNewOpen(true)}/>
+                            )
+                          }}
+                          
+                        />
+                        <div className={styles.listTitle}>{ tasksListTitle }</div>
+                        {/* <CommandBar 
+                          items={[{
+                            key: 'newItem',
+                            text: 'New',
+                            cacheKey: 'myCacheKey',
+                            iconProps: { iconName: 'Add' },
+                            onClick: () => this.setIsNewOpen(true),
+                            buttonStyles: {
+                              root: {
+                                border: '0px'
+                              }
+                            }
+                          }]}
+                        /> */}
+                        <div className={styles.container}>
+                          <div className={styles.body}>
+                            <div className={styles.leftCol}>
+                              <div style={{paddingTop: '76px', paddingBottom: '50px'}}>
+                                <TasksList 
+                                  tasks={tasks}
+                                  onTaskClick={this.openViewEditTaskPanel}
+                                  onTaskCompletionToggle={this.toggleTaskStatus}
+                                />
+                              </div>
+                            </div>
+                            <div className={styles.rightCol}>
+                              <div style={{overflowX: 'scroll', borderLeft: 'solid 2px lightblue'}}>
+                                <GanttChart
+                                  tasks={tasks}
+                                  onTaskClick={this.openViewEditTaskPanel}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          {selectedTask &&
+                            <ViewEditTaskPanel 
+                              isPanelOpen={isViewEditOpen}
+                              task={selectedTask}
+                              setIsPanelOpen={this.setIsViewEditOpen}
+                              onPropertyChange={this.onTaskPropertyChange}
+                              onPersonPropertyChange={this.onTaskPersonPropertyChange}
+                              onPredecessorsPropertyChange={this.onTaskPredecessorsPropertyChange}
+                              statusOptions={statusOptions}
+                              priorityOptions={priorityOptions}
+                              predecessorOptions={predecessorOptions}
+                            />
+                          }
+                          <NewTaskPanel 
+                            isPanelOpen={isNewOpen}
+                            setIsPanelOpen={this.setIsNewOpen}
+                            onSubmit={this.submitNewTask}
+                            statusOptions={statusOptions}
+                            priorityOptions={priorityOptions}
+                            predecessorOptions={predecessorOptions}
+                          />
+                        </div>
+                      </div>
+                    }
+                  </>
                 }
-              }]}
-            /> */}
-            <div className={styles.container}>
-              <div className={styles.body}>
-                <div className={styles.leftCol}>
-                  <div style={{paddingTop: '76px', paddingBottom: '50px'}}>
-                    <TasksList 
-                      tasks={tasks}
-                      onTaskClick={this.openViewEditTaskPanel}
-                      onTaskCompletionToggle={this.toggleTaskStatus}
-                    />
-                  </div>
-                </div>
-                <div className={styles.rightCol}>
-                  <div style={{overflowX: 'scroll', borderLeft: 'solid 2px lightblue'}}>
-                    <GanttChart
-                      tasks={tasks}
-                      onTaskClick={this.openViewEditTaskPanel}
-                    />
-                  </div>
-                </div>
-              </div>
-              {selectedTask &&
-                <ViewEditTaskPanel 
-                  isPanelOpen={isViewEditOpen}
-                  task={selectedTask}
-                  setIsPanelOpen={this.setIsViewEditOpen}
-                  onPropertyChange={this.onTaskPropertyChange}
-                  onPersonPropertyChange={this.onTaskPersonPropertyChange}
-                  onPredecessorsPropertyChange={this.onTaskPredecessorsPropertyChange}
-                  statusOptions={statusOptions}
-                  priorityOptions={priorityOptions}
-                  predecessorOptions={predecessorOptions}
-                />
-              }
-              <NewTaskPanel 
-                isPanelOpen={isNewOpen}
-                setIsPanelOpen={this.setIsNewOpen}
-                onSubmit={this.submitNewTask}
-                statusOptions={statusOptions}
-                priorityOptions={priorityOptions}
-                predecessorOptions={predecessorOptions}
-              />
-            </div>
-          </div>
+              </>
+            }
+          </>
         }
       </div>
     );

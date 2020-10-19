@@ -106,6 +106,7 @@ const ViewEditTaskPanel: React.FunctionComponent<IViewEditTaskPanelProps> = (pro
         closeButtonAriaLabel='Close'
         headerText='Edit Task'
         onDismiss={() => setIsPanelOpen(false)}
+        isLightDismiss
       >
         <div className={styles.container}>
           <div className={styles.body}>

@@ -68,7 +68,6 @@ export default class SpfxTasksGanttWebPart extends BaseClientSideWebPart<ISpfxTa
   private onListChange = async (propertyPath: string, newValue: any): Promise<any> => {
     update(this.properties, propertyPath, (): any => { return newValue; });
     this.render();
-    this.context.propertyPane.refresh();
   }
 
   protected onInit(): Promise<void> {
@@ -81,6 +80,10 @@ export default class SpfxTasksGanttWebPart extends BaseClientSideWebPart<ISpfxTa
 
       this.properties.tasksListSiteUrl = this.context.pageContext.web.absoluteUrl;
     });
+  }
+
+  protected get disableReactivePropertyChanges(): boolean {
+    return true;
   }
 
   protected getPropertyPaneConfiguration(): IPropertyPaneConfiguration {

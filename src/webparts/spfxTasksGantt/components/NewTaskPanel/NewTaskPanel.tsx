@@ -78,6 +78,7 @@ const NewTaskPanel = (props: INewTaskPanelProps) => {
         closeButtonAriaLabel='Close'
         headerText='New Task'
         onDismiss={() => setIsPanelOpen(false)}
+        isLightDismiss
       >
         <div className={styles.container}>
           <div className={styles.body}>
