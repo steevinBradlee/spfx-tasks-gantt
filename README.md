@@ -6,7 +6,7 @@
 
 SharePoint Framework (SPFx) Gantt Chart web part project for a SharePoint Tasks list
 
-[picture of the solution in action, if possible]
+![](gantt-chart.gif)
 
 ## Used SharePoint Framework Version
 
@@ -27,7 +27,7 @@ SharePoint Framework (SPFx) Gantt Chart web part project for a SharePoint Tasks 
 
 Solution|Author(s)
 --------|---------
-folder name | Author details (name, company, twitter alias with link)
+spfx-tasks-gantt | Stephen Bradley, step15hen@gmail.com
 
 ## Version history
 
@@ -54,17 +54,12 @@ Version|Date|Comments
 
 ## Features
 
-Description of the extension that expands upon high-level summary above.
+Gantt Chart web part that uses a SharePoint Tasks list. This project is still very much in development and is missing some important features:
 
-This extension illustrates the following concepts:
+- User images. When a user is assigned a task their image should appear in the chart inside the task row. Right now there is only a dummy image
+- Dependency lines. There should be dependency lines between tasks in the chart, indicating what tasks are dependent on one another.
 
-- topic 1
-- topic 2
-- topic 3
-
-> Notice that better pictures and documentation will increase the sample usage and the value you are providing for others. Thanks for your submissions advance.
-
-> Share your web part with others through Microsoft 365 Patterns and Practices program to get visibility and exposure. More details on the community, open-source projects and other activities from http://aka.ms/m365pnp.
+Some other general UI tidy up is necessary.
 
 ## References
 
